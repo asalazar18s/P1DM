@@ -6,6 +6,8 @@ MAP Node sends info of size and location of results
 info is sent to REDUCE Node.
 '''
 
+from threading import Thread
+
 
 def ReadText():
     '''
@@ -13,19 +15,50 @@ def ReadText():
     Starts the threading process?? or separate method to handle and initiate that process??
     '''
 
-    linePlaceHolder = []
 
-    file = open("aaa.txt")
+    #opens file and reads lines into list
+    file = open("alice29.txt")
     lines = file.readlines()
 
-    line_counter = 2
-    line_divider = int(len(lines) / 2)
-    print(line_divider)
-    while line_divider >0:
-        print(line_divider)
-        line_divider = line_divider - 1
+    #gets number of nodes to be processed
+    line_divider = int(len(lines) / 25)
+    #print(line_divider)
+
+    #appends group of 25 lines to list
+    listOfLines = []
+    for groupOfLines in lines:
+        listOfLines.append(lines[:24])
+        lines[:24] = []
+
+    #checks for remaining lines after
+    if len(lines) > 0:
+        listOfLines.append(lines)
+
+    print len(listOfLines)
+    #print listOfLines[145]
+
+    myThreads = []
+    for i in range(6):
+        thread = Thread(target = MapNode, args = (listOfLines[i]))
+        thread.start()
+        myThreads.append(thread)
+        listOfLines.pop(i)
+
+    #checks each thread and passes 25 new lines if thread is NOT alive, this keeps 6 threads running all the time.
+    while listOfLines > 0:
+        for thread in myThreads:
+            if thread.isAlive():
+                continue
+            else:
+                newThread = Thread(target = MapNode, args = (listOfLines[0]))
+                newThread.start()
+                myThreads.remove(thread)
+                myThreads.append(newThread)
+                listOfLines.pop(0)
 
 
+def MapNode(list):
+    print(list[0])
 
         # with open("aaa.txt", newline=None) as f:
         # for line_terminated in f.readlines():
