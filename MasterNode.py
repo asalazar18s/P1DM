@@ -14,29 +14,41 @@ def ReadText():
     Gets txt file and separates given the value of lines
     Starts the threading process?? or separate method to handle and initiate that process??
     '''
+    # maybe refactor code so that all the "new file" generation fits in one method...
+    # opens file and reads lines into list
+    main_file = open("alice29.txt")
+    main_file_lines = main_file.readlines()
 
+    # gets number of nodes to be processed
+    line_divider = (len(main_file_lines) / 6)
 
-    #opens file and reads lines into list
-    file = open("alice29.txt")
-    lines = file.readlines()
-
-    #gets number of nodes to be processed
-    line_divider = int(len(lines) / 25)
-    #print(line_divider)
-
-    #appends group of 25 lines to list
     listOfLines = []
-    for groupOfLines in lines:
-        listOfLines.append(lines[:24])
-        lines[:24] = []
+    if line_divider.is_integer():
+        for groupOfLines in range(6):
+            listOfLines.append(main_file_lines[:int(line_divider)])
+            main_file_lines[:int(line_divider)] = []
+            newfile = open("node" + str(groupOfLines) + ".txt", "w+")
+            for val in range(int(line_divider)):
+                newfile.write(listOfLines[groupOfLines][val])
+    else:
+        for groupOfLines in range(6):
+            if groupOfLines != 5:
+                listOfLines.append(main_file_lines[:int(line_divider)])
+                main_file_lines[:int(line_divider)] = []
+                newfile = open("node" + str(groupOfLines) + ".txt", "w+")
+                for val in range(int(line_divider)):
+                    newfile.write(listOfLines[groupOfLines][val])
+            else:
+                listOfLines.append(main_file_lines[:])
+                main_file_lines[:] = []
+                newfile = open("node" + str(groupOfLines) + ".txt", "w+")
+                for line in range(len(listOfLines[-1])):
+                    newfile.write(listOfLines[-1][line])
 
-    #checks for remaining lines after
-    if len(lines) > 0:
-        listOfLines.append(lines)
 
-    print len(listOfLines)
-    #print listOfLines[145]
 
+
+    '''
     myThreads = []
     for i in range(6):
         thread = Thread(target = MapNode, args = (listOfLines[i]))
@@ -55,7 +67,7 @@ def ReadText():
                 myThreads.remove(thread)
                 myThreads.append(newThread)
                 listOfLines.pop(0)
-
+    '''
 
 def MapNode(list):
     print(list[0])
