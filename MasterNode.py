@@ -4,9 +4,11 @@ Will control the division of the txt
 Send to each of the MAP nodes the excerpt
 MAP Node sends info of size and location of results
 info is sent to REDUCE Node.
+https://stackoverflow.com/questions/265960/best-way-to-strip-punctuation-from-a-string
 '''
 
 from threading import Thread
+import string
 
 
 def ReadText():
@@ -45,45 +47,61 @@ def ReadText():
                 for line in range(len(listOfLines[-1])):
                     newfile.write(listOfLines[-1][line])
 
+    ThreadCoordinator()
 
 
-
+def ThreadCoordinator():
     '''
-    myThreads = []
+    No parameters
+    launch a thread per file
+    '''
     for i in range(6):
-        thread = Thread(target = MapNode, args = (listOfLines[i]))
+        thread = Thread(target=MapNode, args=[i])
         thread.start()
-        myThreads.append(thread)
-        listOfLines.pop(i)
 
-    #checks each thread and passes 25 new lines if thread is NOT alive, this keeps 6 threads running all the time.
-    while listOfLines > 0:
-        for thread in myThreads:
-            if thread.isAlive():
-                continue
-            else:
-                newThread = Thread(target = MapNode, args = (listOfLines[0]))
-                newThread.start()
-                myThreads.remove(thread)
-                myThreads.append(newThread)
-                listOfLines.pop(0)
+
+def MapNode(fileNumber):
     '''
+    This method will be called by each thread to handle each file
+    Do the Map part of algorithm
+    Should this method receive a parameter?
+    :return: nothing? the new files with this part of the algorithm solved?
+    '''
+    # print(str(fileNumber) + " this file")
+    processed_file = open("node" + str(fileNumber) + ".txt")
+    lines_to_process = processed_file.readlines()
 
-def MapNode(list):
-    print(list[0])
+    newfile = open("Map" + str(fileNumber) + ".txt", "w+")
+    #set up a data structure to hold values.
+    value_holder = []
+    with open("node" + str(fileNumber) + ".txt", newline=None) as f:
+        for line_terminated in f.readlines():
+            # get rid of newline character
+            line = line_terminated.rstrip('\n')
+            # if the line is not empty process it
+            if len(line) > 0:
+                print(str(fileNumber) + " " + line)
+                #create an individual list per line that separates strings by space character
+                word_list = line.split(" ")
+                for word in word_list:
+                    #get rid of ( , . ! ? )
+                    word = word.translate(str.maketrans('', '', string.punctuation))
+                    value_holder.append((word, 1))
 
-        # with open("aaa.txt", newline=None) as f:
-        # for line_terminated in f.readlines():
-        #     # get rid of newline character
-        #     line = line_terminated.rstrip('\n')
-        #     # if the line is not empty process it
-        #     if len(line) > 0:
-        #         # add the line to the list used as placeholder
-        #         linePlaceHolder.append(line)
-        #         if len(linePlaceHolder) == 2:
-        #             # what to do here once you have the max lines you want
-        #             print(linePlaceHolder)
-        #             linePlaceHolder.clear()
+    for value in value_holder:
+        newfile.write(str(value))
+
+    # just a checker
+    # if fileNumber == 0:
+    #    print(value_holder)
+
+
+
+
+
+
+
 
 
 ReadText()
+
