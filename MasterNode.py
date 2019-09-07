@@ -30,6 +30,8 @@ def ReadText():
         listOfLines.append(lines[:24])
         lines[:24] = []
 
+        #abrir un fichero con las lineas dentro del for
+
     #checks for remaining lines after
     if len(lines) > 0:
         listOfLines.append(lines)
@@ -57,7 +59,7 @@ def ReadText():
                 listOfLines.pop(0)
 
 
-def MapNode(list):
+def MapNode(list = [], *args):
     print(list[0])
 
         # with open("aaa.txt", newline=None) as f:
