@@ -18,7 +18,7 @@ def ReadText():
     '''
     # maybe refactor code so that all the "new file" generation fits in one method...
     # opens file and reads lines into list
-    main_file = open("alice29.txt")
+    main_file = open("aaa.txt")
     main_file_lines = main_file.readlines()
 
     # gets number of nodes to be processed
@@ -67,6 +67,8 @@ def ThreadCoordinator():
 
     print("All Map threads done")
 
+    ShuffleNode()
+
 
 
 
@@ -97,12 +99,50 @@ def MapNode(fileNumber):
 
     newfile = open("Map" + str(fileNumber) + ".txt", "w+")
     for value in value_holder:
-        newfile.write(str(value))
+        newfile.write(str(value) + ":")
 
 def ShuffleNode():
-    a = open("node5.txt")
-    ab = a.readlines()
-    print(ab[0:10])
+    '''
+    this node will add up all the values up into one file? 2 files? one per file?
+    create two tuples maybe? return that to the thread coordinator to launch two threads to reduce?
+    :return: two touples
+    ME ESTA BOTANDO LOS ULTIMOS DICCIONARIOS VACIOS
+    '''
+
+    validator_list_A = list(string.ascii_lowercase[0:13])
+    validator_list_B = list(string.ascii_lowercase[14:])
+
+    a_to_m_dict = {}
+    n_to_z_dict = {}
+
+    for val in range(6):
+        file_to_process = open("Map" + str(val) + ".txt")
+        tuples_to_process = file_to_process.readlines()
+        tuples_to_process = tuples_to_process[0].split(":")
+        tuples_to_process = tuples_to_process.pop(-1)
+
+        for element in tuples_to_process:
+            element_to_process = element.split(",")
+            element_to_process = element_to_process[0]
+            element_to_process = element_to_process.translate(str.maketrans('', '', string.punctuation))
+            if len(element_to_process) > 0:
+                if element_to_process[0] in validator_list_A:
+                    if element_to_process in a_to_m_dict:
+                        a_to_m_dict[element_to_process] = a_to_m_dict[element_to_process].append(1)
+                    else:
+                        a_to_m_dict[element_to_process] = [1]
+
+                elif element_to_process[0] in validator_list_B:
+                    if element_to_process in n_to_z_dict:
+                        n_to_z_dict[element_to_process] = n_to_z_dict[element_to_process].append(1)
+                    else:
+                        n_to_z_dict[element_to_process] = [1]
+        file_to_process.close()
+
+
+    newfile1 = open("Shuffle1.txt", "w+")
+    newfile1.write(str(a_to_m_dict))
+    newfile1.close()
 
 
 
