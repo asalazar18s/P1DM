@@ -32,6 +32,7 @@ def ReadText():
             newfile = open("node" + str(groupOfLines) + ".txt", "w+")
             for val in range(int(line_divider)):
                 newfile.write(listOfLines[groupOfLines][val])
+            newfile.close()
     else:
         for groupOfLines in range(6):
             if groupOfLines != 5:
@@ -40,12 +41,14 @@ def ReadText():
                 newfile = open("node" + str(groupOfLines) + ".txt", "w+")
                 for val in range(int(line_divider)):
                     newfile.write(listOfLines[groupOfLines][val])
+                newfile.close()
             else:
                 listOfLines.append(main_file_lines[:])
                 main_file_lines[:] = []
                 newfile = open("node" + str(groupOfLines) + ".txt", "w+")
                 for line in range(len(listOfLines[-1])):
                     newfile.write(listOfLines[-1][line])
+                newfile.close()
 
     ThreadCoordinator()
 
@@ -53,11 +56,18 @@ def ReadText():
 def ThreadCoordinator():
     '''
     No parameters
-    launch a thread per file
+    launch a thread per file for map
+    hold for them to finish
+    launch shuffle threads.
     '''
     for i in range(6):
         thread = Thread(target=MapNode, args=[i])
         thread.start()
+        thread.join()
+
+    print("All Map threads done")
+
+
 
 
 def MapNode(fileNumber):
@@ -67,33 +77,32 @@ def MapNode(fileNumber):
     Should this method receive a parameter?
     :return: nothing? the new files with this part of the algorithm solved?
     '''
-    # print(str(fileNumber) + " this file")
-    processed_file = open("node" + str(fileNumber) + ".txt")
-    lines_to_process = processed_file.readlines()
 
-    newfile = open("Map" + str(fileNumber) + ".txt", "w+")
-    #set up a data structure to hold values.
+    # set up a data structure to hold values.
     value_holder = []
-    with open("node" + str(fileNumber) + ".txt", newline=None) as f:
+    with open("node" + str(fileNumber) + ".txt") as f:
         for line_terminated in f.readlines():
             # get rid of newline character
             line = line_terminated.rstrip('\n')
             # if the line is not empty process it
             if len(line) > 0:
-                print(str(fileNumber) + " " + line)
-                #create an individual list per line that separates strings by space character
+                # print(str(fileNumber) + " " + line)
+                # create an individual list per line that separates strings by space character
                 word_list = line.split(" ")
                 for word in word_list:
-                    #get rid of ( , . ! ? )
+                    # get rid of ( , . ! ? )
                     word = word.translate(str.maketrans('', '', string.punctuation))
+                    word = word.lower()
                     value_holder.append((word, 1))
 
+    newfile = open("Map" + str(fileNumber) + ".txt", "w+")
     for value in value_holder:
         newfile.write(str(value))
 
-    # just a checker
-    # if fileNumber == 0:
-    #    print(value_holder)
+def ShuffleNode():
+    a = open("node5.txt")
+    ab = a.readlines()
+    print(ab[0:10])
 
 
 
