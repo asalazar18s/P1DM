@@ -4,9 +4,11 @@ Will control the division of the txt
 Send to each of the MAP nodes the excerpt
 MAP Node sends info of size and location of results
 info is sent to REDUCE Node.
+https://stackoverflow.com/questions/265960/best-way-to-strip-punctuation-from-a-string
 '''
 
 from threading import Thread
+import string
 
 
 def ReadText():
@@ -14,66 +16,141 @@ def ReadText():
     Gets txt file and separates given the value of lines
     Starts the threading process?? or separate method to handle and initiate that process??
     '''
+    # maybe refactor code so that all the "new file" generation fits in one method...
+    # opens file and reads lines into list
+    main_file = open("aaa.txt")
+    main_file_lines = main_file.readlines()
 
+    # gets number of nodes to be processed
+    line_divider = (len(main_file_lines) / 6)
 
-    #opens file and reads lines into list
-    file = open("alice29.txt")
-    lines = file.readlines()
-
-    #gets number of nodes to be processed
-    line_divider = int(len(lines) / 25)
-    #print(line_divider)
-
-    #appends group of 25 lines to list
     listOfLines = []
-    for groupOfLines in lines:
-        listOfLines.append(lines[:24])
-        lines[:24] = []
-
-        #abrir un fichero con las lineas dentro del for
-
-    #checks for remaining lines after
-    if len(lines) > 0:
-        listOfLines.append(lines)
-
-    print len(listOfLines)
-    #print listOfLines[145]
-
-    myThreads = []
-    for i in range(6):
-        thread = Thread(target = MapNode, args = (listOfLines[i]))
-        thread.start()
-        myThreads.append(thread)
-        listOfLines.pop(i)
-
-    #checks each thread and passes 25 new lines if thread is NOT alive, this keeps 6 threads running all the time.
-    while listOfLines > 0:
-        for thread in myThreads:
-            if thread.isAlive():
-                continue
+    if line_divider.is_integer():
+        for groupOfLines in range(6):
+            listOfLines.append(main_file_lines[:int(line_divider)])
+            main_file_lines[:int(line_divider)] = []
+            newfile = open("node" + str(groupOfLines) + ".txt", "w+")
+            for val in range(int(line_divider)):
+                newfile.write(listOfLines[groupOfLines][val])
+            newfile.close()
+    else:
+        for groupOfLines in range(6):
+            if groupOfLines != 5:
+                listOfLines.append(main_file_lines[:int(line_divider)])
+                main_file_lines[:int(line_divider)] = []
+                newfile = open("node" + str(groupOfLines) + ".txt", "w+")
+                for val in range(int(line_divider)):
+                    newfile.write(listOfLines[groupOfLines][val])
+                newfile.close()
             else:
-                newThread = Thread(target = MapNode, args = (listOfLines[0]))
-                newThread.start()
-                myThreads.remove(thread)
-                myThreads.append(newThread)
-                listOfLines.pop(0)
+                listOfLines.append(main_file_lines[:])
+                main_file_lines[:] = []
+                newfile = open("node" + str(groupOfLines) + ".txt", "w+")
+                for line in range(len(listOfLines[-1])):
+                    newfile.write(listOfLines[-1][line])
+                newfile.close()
+
+    ThreadCoordinator()
 
 
-def MapNode(list = [], *args):
-    print(list[0])
+def ThreadCoordinator():
+    '''
+    No parameters
+    launch a thread per file for map
+    hold for them to finish
+    launch shuffle threads.
+    '''
+    for i in range(6):
+        thread = Thread(target=MapNode, args=[i])
+        thread.start()
+        thread.join()
 
-        # with open("aaa.txt", newline=None) as f:
-        # for line_terminated in f.readlines():
-        #     # get rid of newline character
-        #     line = line_terminated.rstrip('\n')
-        #     # if the line is not empty process it
-        #     if len(line) > 0:
-        #         # add the line to the list used as placeholder
-        #         linePlaceHolder.append(line)
-        #         if len(linePlaceHolder) == 2:
-        #             # what to do here once you have the max lines you want
-        #             print(linePlaceHolder)
-        #             linePlaceHolder.clear()
+    print("All Map threads done")
+
+    ShuffleNode()
+
+
+
+
+def MapNode(fileNumber):
+    '''
+    This method will be called by each thread to handle each file
+    Do the Map part of algorithm
+    Should this method receive a parameter?
+    :return: nothing? the new files with this part of the algorithm solved?
+    '''
+
+    # set up a data structure to hold values.
+    value_holder = []
+    with open("node" + str(fileNumber) + ".txt") as f:
+        for line_terminated in f.readlines():
+            # get rid of newline character
+            line = line_terminated.rstrip('\n')
+            # if the line is not empty process it
+            if len(line) > 0:
+                # print(str(fileNumber) + " " + line)
+                # create an individual list per line that separates strings by space character
+                word_list = line.split(" ")
+                for word in word_list:
+                    # get rid of ( , . ! ? )
+                    word = word.translate(str.maketrans('', '', string.punctuation))
+                    word = word.lower()
+                    value_holder.append((word, 1))
+
+    newfile = open("Map" + str(fileNumber) + ".txt", "w+")
+    for value in value_holder:
+        newfile.write(str(value) + ":")
+
+def ShuffleNode():
+    '''
+    this node will add up all the values up into one file? 2 files? one per file?
+    create two tuples maybe? return that to the thread coordinator to launch two threads to reduce?
+    :return: two touples
+    ME ESTA BOTANDO LOS ULTIMOS DICCIONARIOS VACIOS
+    '''
+
+    validator_list_A = list(string.ascii_lowercase[0:13])
+    validator_list_B = list(string.ascii_lowercase[14:])
+
+    a_to_m_dict = {}
+    n_to_z_dict = {}
+
+    for val in range(6):
+        file_to_process = open("Map" + str(val) + ".txt")
+        tuples_to_process = file_to_process.readlines()
+        tuples_to_process = tuples_to_process[0].split(":")
+        tuples_to_process.pop(-1)
+
+        for element in tuples_to_process:
+            element_to_process = element.split(",")
+            element_to_process = element_to_process[0]
+            element_to_process = element_to_process.translate(str.maketrans('', '', string.punctuation))
+            if len(element_to_process) > 0:
+                if element_to_process[0] in validator_list_A:
+                    if element_to_process in a_to_m_dict:
+                        a_to_m_dict[element_to_process] = a_to_m_dict[element_to_process].append(1)
+                    else:
+                        a_to_m_dict[element_to_process] = [1]
+
+                elif element_to_process[0] in validator_list_B:
+                    if element_to_process in n_to_z_dict:
+                        n_to_z_dict[element_to_process] = n_to_z_dict[element_to_process].append(1)
+                    else:
+                        n_to_z_dict[element_to_process] = [1]
+        file_to_process.close()
+
+
+    newfile1 = open("Shuffle1.txt", "w+")
+    newfile1.write(str(a_to_m_dict))
+    newfile1.close()
+
+
+
+
+
+
+
 
 
 ReadText()
+
