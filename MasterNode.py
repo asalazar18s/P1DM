@@ -9,6 +9,10 @@ https://stackoverflow.com/questions/265960/best-way-to-strip-punctuation-from-a-
 
 from threading import Thread
 import string
+import re
+
+Dictionary1 = {}
+Dictionary2 = {}
 
 
 def ReadText():
@@ -18,7 +22,7 @@ def ReadText():
     '''
     # maybe refactor code so that all the "new file" generation fits in one method...
     # opens file and reads lines into list
-    main_file = open("aaa.txt")
+    main_file = open("alice29.txt")
     main_file_lines = main_file.readlines()
 
     # gets number of nodes to be processed
@@ -69,6 +73,14 @@ def ThreadCoordinator():
 
     ShuffleNode()
 
+    for i in range(2):
+        number = i+1
+        node = "Shuffle" + str(number) + ".txt"
+        thread = Thread(target=ReduceNode, args=(node,))
+        thread.start()
+        thread.join()
+
+    print("All reduce threads are done")
 
 
 
@@ -110,7 +122,7 @@ def ShuffleNode():
     '''
 
     validator_list_A = list(string.ascii_lowercase[0:13])
-    validator_list_B = list(string.ascii_lowercase[14:])
+    validator_list_B = list(string.ascii_lowercase[13:])
 
     a_to_m_dict = {}
     n_to_z_dict = {}
@@ -128,13 +140,13 @@ def ShuffleNode():
             if len(element_to_process) > 0:
                 if element_to_process[0] in validator_list_A:
                     if element_to_process in a_to_m_dict:
-                        a_to_m_dict[element_to_process] = a_to_m_dict[element_to_process].append(1)
+                        a_to_m_dict[element_to_process].append(1)
                     else:
                         a_to_m_dict[element_to_process] = [1]
 
                 elif element_to_process[0] in validator_list_B:
                     if element_to_process in n_to_z_dict:
-                        n_to_z_dict[element_to_process] = n_to_z_dict[element_to_process].append(1)
+                        n_to_z_dict[element_to_process].append(1)
                     else:
                         n_to_z_dict[element_to_process] = [1]
         file_to_process.close()
@@ -142,14 +154,39 @@ def ShuffleNode():
 
     newfile1 = open("Shuffle1.txt", "w+")
     newfile1.write(str(a_to_m_dict))
+    newfile2 = open("Shuffle2.txt", "w+")
+    newfile2.write(str(n_to_z_dict))
     newfile1.close()
 
 
+def ReduceNode(txtNode):
+    """
 
+    :param txtNode: Shuffle node to reduce
+    :return: reduced nodes
+    """
+    dictionary = {}
+    file_to_reduce = open(txtNode)
+    values_to_reduce = file_to_reduce.readlines()
+    values_to_reduce = values_to_reduce[0].split("],")
+    for element in values_to_reduce:
+        element_to_reduce = element.split(":")
+        number_to_reduce = element_to_reduce[1]
+        number_to_reduce = number_to_reduce.translate(str.maketrans('', '', string.punctuation))
+        number_to_reduce = number_to_reduce.strip()
+        number_to_reduce = re.sub("\s+", ",", number_to_reduce.strip())
+        number_to_reduce = [int(x) for x in number_to_reduce.split(',')]
+        element_to_reduce = element_to_reduce[0]
+        element_to_reduce = element_to_reduce.translate(str.maketrans('','', string.punctuation))
+        dictionary.update({element_to_reduce:len(number_to_reduce)})
 
-
-
-
+    newfile1 = open("Reduced.txt", "a+")
+    if txtNode == "Shuffle1.txt":
+        Dictionary1 = dictionary
+        newfile1.write(str(Dictionary1))
+    if txtNode == "Shuffle2.txt":
+        Dictionary2 = dictionary
+        newfile1.write(str(Dictionary2))
 
 
 ReadText()
