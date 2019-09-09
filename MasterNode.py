@@ -14,47 +14,54 @@ import re
 Dictionary1 = {}
 Dictionary2 = {}
 
+map_tasks = {}
+
 
 def ReadText():
     '''
     Gets txt file and separates given the value of lines
     Starts the threading process?? or separate method to handle and initiate that process??
     '''
-    # maybe refactor code so that all the "new file" generation fits in one method...
-    # opens file and reads lines into list
-    main_file = open("alice29.txt")
-    main_file_lines = main_file.readlines()
+    # basic error handling for program init, if any part of this fails then nothing is produced.
+    try:
+        # opens file and reads lines into list
+        main_file = open("aa.txt")
+        main_file_lines = main_file.readlines()
 
-    # gets number of nodes to be processed
-    line_divider = (len(main_file_lines) / 6)
+        # gets number of nodes to be processed
+        line_divider = (len(main_file_lines) / 6)
 
-    listOfLines = []
-    if line_divider.is_integer():
-        for groupOfLines in range(6):
-            listOfLines.append(main_file_lines[:int(line_divider)])
-            main_file_lines[:int(line_divider)] = []
-            newfile = open("node" + str(groupOfLines) + ".txt", "w+")
-            for val in range(int(line_divider)):
-                newfile.write(listOfLines[groupOfLines][val])
-            newfile.close()
-    else:
-        for groupOfLines in range(6):
-            if groupOfLines != 5:
+        listOfLines = []
+        if line_divider.is_integer():
+            for groupOfLines in range(6):
                 listOfLines.append(main_file_lines[:int(line_divider)])
                 main_file_lines[:int(line_divider)] = []
                 newfile = open("node" + str(groupOfLines) + ".txt", "w+")
                 for val in range(int(line_divider)):
                     newfile.write(listOfLines[groupOfLines][val])
                 newfile.close()
-            else:
-                listOfLines.append(main_file_lines[:])
-                main_file_lines[:] = []
-                newfile = open("node" + str(groupOfLines) + ".txt", "w+")
-                for line in range(len(listOfLines[-1])):
-                    newfile.write(listOfLines[-1][line])
-                newfile.close()
+        else:
+            for groupOfLines in range(6):
+                if groupOfLines != 5:
+                    listOfLines.append(main_file_lines[:int(line_divider)])
+                    main_file_lines[:int(line_divider)] = []
+                    newfile = open("node" + str(groupOfLines) + ".txt", "w+")
+                    for val in range(int(line_divider)):
+                        newfile.write(listOfLines[groupOfLines][val])
+                    newfile.close()
+                else:
+                    listOfLines.append(main_file_lines[:])
+                    main_file_lines[:] = []
+                    newfile = open("node" + str(groupOfLines) + ".txt", "w+")
+                    for line in range(len(listOfLines[-1])):
+                        newfile.write(listOfLines[-1][line])
+                    newfile.close()
 
-    ThreadCoordinator()
+        ThreadCoordinator()
+    except:
+        print("Program Failed")
+
+
 
 
 def ThreadCoordinator():
@@ -63,12 +70,25 @@ def ThreadCoordinator():
     launch a thread per file for map
     hold for them to finish
     launch shuffle threads.
+    If the thread coordinator fails the entire program is stopped.
+    Individual errors are handled inside their respective methods.
     '''
+
+
     for i in range(6):
         thread = Thread(target=MapNode, args=[i])
         thread.start()
+        map_tasks[i] = True
         thread.join()
 
+    # we need to everify that all values in the map_tasks dict are true before proceeding to next step
+    for thread, status in map_tasks.items():
+        if status == False:
+            thread = Thread(target=MapNode, args=[i])
+            thread.start()
+            thread.join()
+        else:
+            continue
     print("All Map threads done")
 
     ShuffleNode()
@@ -90,35 +110,42 @@ def MapNode(fileNumber):
     Do the Map part of algorithm
     Should this method receive a parameter?
     :return: nothing? the new files with this part of the algorithm solved?
+    EXCEPT PART has to have the thread.exit()
     '''
+    try:
+        # map_tasks["Thread -> 1"] = "False"
+        # set up a data structure to hold values.
+        value_holder = []
+        with open("node" + str(fileNumber) + ".txt") as f:
+            for line_terminated in f.readlines():
+                # get rid of newline character
+                line = line_terminated.rstrip('\n')
+                # if the line is not empty process it
+                if len(line) > 0:
+                    # print(str(fileNumber) + " " + line)
+                    # create an individual list per line that separates strings by space character
+                    word_list = line.split(" ")
+                    for word in word_list:
+                        # get rid of ( , . ! ? )
+                        word = word.translate(str.maketrans('', '', string.punctuation))
+                        word = word.lower()
+                        value_holder.append((word, 1))
 
-    # set up a data structure to hold values.
-    value_holder = []
-    with open("node" + str(fileNumber) + ".txt") as f:
-        for line_terminated in f.readlines():
-            # get rid of newline character
-            line = line_terminated.rstrip('\n')
-            # if the line is not empty process it
-            if len(line) > 0:
-                # print(str(fileNumber) + " " + line)
-                # create an individual list per line that separates strings by space character
-                word_list = line.split(" ")
-                for word in word_list:
-                    # get rid of ( , . ! ? )
-                    word = word.translate(str.maketrans('', '', string.punctuation))
-                    word = word.lower()
-                    value_holder.append((word, 1))
+        newfile = open("Map" + str(fileNumber) + ".txt", "w+")
+        for value in value_holder:
+            newfile.write(str(value) + ":")
 
-    newfile = open("Map" + str(fileNumber) + ".txt", "w+")
-    for value in value_holder:
-        newfile.write(str(value) + ":")
+        map_tasks[fileNumber] = True
+    except:
+        # if there is any failure the value of the dictionary is changed to send a feedback to the coordinator
+        # by changing it to false it will re-do the task that was failed.
+        map_tasks[fileNumber] = False
 
 def ShuffleNode():
     '''
     this node will add up all the values up into one file? 2 files? one per file?
     create two tuples maybe? return that to the thread coordinator to launch two threads to reduce?
     :return: two touples
-    ME ESTA BOTANDO LOS ULTIMOS DICCIONARIOS VACIOS
     '''
 
     validator_list_A = list(string.ascii_lowercase[0:13])
@@ -161,10 +188,10 @@ def ShuffleNode():
 
 def ReduceNode(txtNode):
     """
-
     :param txtNode: Shuffle node to reduce
     :return: reduced nodes
     """
+    # TODO: handle reduce error.
     dictionary = {}
     file_to_reduce = open(txtNode)
     values_to_reduce = file_to_reduce.readlines()
@@ -190,4 +217,6 @@ def ReduceNode(txtNode):
 
 
 ReadText()
+
+print(map_tasks)
 
