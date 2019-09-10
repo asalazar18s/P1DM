@@ -15,6 +15,7 @@ Dictionary1 = {}
 Dictionary2 = {}
 
 map_tasks = {}
+reduce_tasks = {}
 
 
 def ReadText():
@@ -25,7 +26,7 @@ def ReadText():
     # basic error handling for program init, if any part of this fails then nothing is produced.
     try:
         # opens file and reads lines into list
-        main_file = open("aa.txt")
+        main_file = open("aaa.txt")
         main_file_lines = main_file.readlines()
 
         # gets number of nodes to be processed
@@ -100,6 +101,17 @@ def ThreadCoordinator():
         thread.start()
         thread.join()
 
+    for thread, status in reduce_tasks.items():
+        if status == False:
+            for i in range(2):
+                number = i + 1
+                node = "Shuffle" + str(number) + ".txt"
+                thread = Thread(target=ReduceNode, args=(node,))
+                thread.start()
+                thread.join()
+
+        else:
+            continue
     print("All reduce threads are done")
 
 
@@ -192,31 +204,38 @@ def ReduceNode(txtNode):
     :return: reduced nodes
     """
     # TODO: handle reduce error.
-    dictionary = {}
-    file_to_reduce = open(txtNode)
-    values_to_reduce = file_to_reduce.readlines()
-    values_to_reduce = values_to_reduce[0].split("],")
-    for element in values_to_reduce:
-        element_to_reduce = element.split(":")
-        number_to_reduce = element_to_reduce[1]
-        number_to_reduce = number_to_reduce.translate(str.maketrans('', '', string.punctuation))
-        number_to_reduce = number_to_reduce.strip()
-        number_to_reduce = re.sub("\s+", ",", number_to_reduce.strip())
-        number_to_reduce = [int(x) for x in number_to_reduce.split(',')]
-        element_to_reduce = element_to_reduce[0]
-        element_to_reduce = element_to_reduce.translate(str.maketrans('','', string.punctuation))
-        dictionary.update({element_to_reduce:len(number_to_reduce)})
+    try:
+        dictionary = {}
+        file_to_reduce = open(txtNode)
+        values_to_reduce = file_to_reduce.readlines()
+        values_to_reduce = values_to_reduce[0].split("],")
+        for element in values_to_reduce:
+            element_to_reduce = element.split(":")
+            number_to_reduce = element_to_reduce[1]
+            number_to_reduce = number_to_reduce.translate(str.maketrans('', '', string.punctuation))
+            number_to_reduce = number_to_reduce.strip()
+            number_to_reduce = re.sub("\s+", ",", number_to_reduce.strip())
+            number_to_reduce = [int(x) for x in number_to_reduce.split(',')]
+            element_to_reduce = element_to_reduce[0]
+            element_to_reduce = element_to_reduce.translate(str.maketrans('', '', string.punctuation))
+            dictionary.update({element_to_reduce: len(number_to_reduce)})
 
-    newfile1 = open("Reduced.txt", "a+")
-    if txtNode == "Shuffle1.txt":
-        Dictionary1 = dictionary
-        newfile1.write(str(Dictionary1))
-    if txtNode == "Shuffle2.txt":
-        Dictionary2 = dictionary
-        newfile1.write(str(Dictionary2))
+        newfile1 = open("Reduced.txt", "a+")
+        if txtNode == "Shuffle1.txt":
+            Dictionary1 = dictionary
+            newfile1.write(str(Dictionary1))
+        if txtNode == "Shuffle2.txt":
+            Dictionary2 = dictionary
+            newfile1.write(str(Dictionary2))
+
+        reduce_tasks[txtNode] = True
+
+    except:
+        reduce_tasks[txtNode] = False
 
 
 ReadText()
 
 print(map_tasks)
+print(reduce_tasks)
 
